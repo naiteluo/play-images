@@ -28,6 +28,9 @@ class Application {
 
     private originRes?: ImageResource;
     private resultRes?: ImageResource;
+    private invertedRes?: ImageResource;
+
+    private tmpFftedArray?: Array<any>;
 
     constructor(private canvas: HTMLCanvasElement) {
         this.ctx = canvas.getContext("2d")!;
@@ -39,14 +42,15 @@ class Application {
         this.setCanvasProps()
         window.addEventListener('resize', () => {
             this.setCanvasProps()
-            this.run()
+            this.draw()
         });
     }
 
     finalize() {
     }
 
-    run() {
+    draw() {
+
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         if (this.originRes) {
             let ratio = 1;
@@ -59,6 +63,11 @@ class Application {
                 this.ctx.drawImage(this.resultRes.bitmap, this.originRes.ow * ratio + 2 * AlignUnit, AlignUnit, this.resultRes.ow * ratio, this.resultRes.oh * ratio);
             } else {
                 console.error('resultRes invalid!');
+            }
+            if (this.invertedRes) {
+                this.ctx.drawImage(this.invertedRes.bitmap, AlignUnit, this.originRes.oh + 2 * AlignUnit, this.invertedRes.ow * ratio, this.invertedRes.oh * ratio);
+            } else {
+                console.error('invertedRes invalid!');
             }
         } else {
             console.error('originRes invalid!');
@@ -74,9 +83,12 @@ class Application {
     }
 
     async prepareImageResource(url: string, low: number = 0, high: number = 0) {
+
+        // clear invertedRes
+        this.invertedRes = undefined;
+
         // origin image res
         this.originRes = await ImageResource.loadUrl(url);
-        console.log(this.originRes)
 
         // get only gray info array
         let inputArray: Array<number> = this.originRes.grayArray;
@@ -101,6 +113,8 @@ class Application {
         const r = Math.sqrt(2) * w / 2;
         Fourier.filter(fftedArray, [w, h], r * (100 - low) / 100, r * high / 100);
 
+        this.tmpFftedArray = fftedArray;
+
         // create new ImageData
         const modifiedImageData = new ImageData(w, h);
         for (let i = 0; i < h; i++) {
@@ -115,18 +129,30 @@ class Application {
             }
         }
 
-        console.log(modifiedImageData);
-
         this.resultRes = await ImageResource.loadImageData(modifiedImageData, w, h);
     }
 
-    private prepareTmpCanvas(w: number, h: number) {
-        this.tmpCanvas.width = w;
-        this.tmpCanvas.height = h;
-    }
-
-    private cleanTmpCanvas() {
-        this.tmpCtx.clearRect(0, 0, this.tmpCanvas.width, this.tmpCanvas.height);
+    async doInvert() {
+        if (!this.originRes) {
+            return;
+        }
+        let invertedArray: Array<any> = [];
+        this.tmpFftedArray = Fourier.unshift(this.tmpFftedArray, [this.originRes.rw, this.originRes.rh]);
+        Fourier.invert(this.tmpFftedArray, invertedArray);
+        const w = this.originRes.rw;
+        const h = this.originRes.rh;
+        // create new ImageData
+        const modifiedImageData = new ImageData(w, h);
+        for (let i = 0; i < h; i++) {
+            for (let j = 0; j < w; j++) {
+                let pixelIdx = 4 * (w * i + j);
+                modifiedImageData.data[pixelIdx + 3] = 255;
+                for (let c = 0; c < 3; c++) {
+                    modifiedImageData.data[pixelIdx + c] = invertedArray[w * i + j];
+                }
+            }
+        }
+        this.invertedRes = await ImageResource.loadImageData(modifiedImageData, w, h);
     }
 }
 

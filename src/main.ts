@@ -11,14 +11,19 @@ const configs = {
     imageUrl: "girl.png",
     lowPass: 100,
     highPass: 100,
-    onRun: () => {
-        loadResAndRun();
+    onTransform: async () => {
+        await app.prepareImageResource(`images/${configs.imageUrl}`, configs.lowPass, configs.highPass);
+        app.draw();
+    },
+    onInvert: async () => {
+        await app.doInvert();
+        app.draw();
+    },
+    onApply: async () => {
+        await app.prepareImageResource(`images/${configs.imageUrl}`, configs.lowPass, configs.highPass);
+        await app.doInvert();
+        app.draw();
     }
-}
-
-async function loadResAndRun() {
-    await app.prepareImageResource(`images/${configs.imageUrl}`, configs.lowPass, configs.highPass);
-    app.run();
 }
 
 const controls = new dat.GUI();
@@ -36,9 +41,12 @@ inputsFolder.add(configs, 'imageUrl', [
 controls.add(configs, "lowPass", 0, 100);
 controls.add(configs, "highPass", 0, 100);
 
-controls.add(configs, "onRun").name("Run");
+controls.add(configs, "onTransform").name("Transform");
+controls.add(configs, "onInvert").name("Invert");
+controls.add(configs, "onApply").name("Apply");
 
-
-app.initialize().then(() => {
-    loadResAndRun();
+app.initialize().then(async () => {
+    await app.prepareImageResource(`images/girl.png`, 100, 100);
+    await app.doInvert();
+    app.draw();
 });
