@@ -46,7 +46,7 @@ controls.add(configs, "onInvert").name("Invert");
 controls.add(configs, "onApply").name("Apply");
 
 app.initialize().then(async () => {
-    await app.prepareImageResource(`images/girl.png`, 100, 100);
+    await app.prepareImageResource(`images/ringo.webp`, 100, 100);
     await app.doInvert();
     app.draw();
 });

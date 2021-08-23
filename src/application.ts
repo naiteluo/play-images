@@ -156,6 +156,7 @@ class Application {
     }
 }
 
+// todo: do round2 operation on the origin bitmap's size cause size incorrect after reconstruct from fft array
 class ImageResource {
     _canvas?: OffscreenCanvas;
     _ctx?: OffscreenCanvasRenderingContext2D;
