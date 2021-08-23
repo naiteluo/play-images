@@ -1,6 +1,6 @@
-# typescript-webpack-template
+# play images
 
-simplest typescript x webpack template for scratch
+playground of images.
 
 ## prepare
 

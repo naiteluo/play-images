@@ -38,7 +38,7 @@ module.exports = {
       patterns: [{ from: "public", to: "" }],
     }),
     new HTMLWebpackPlugin({
-      title: "Typescript x Webpack",
+      title: "Play Images",
       filename: "index.html",
       template: "./public/index.template.html",
       chunks: ["main"],
